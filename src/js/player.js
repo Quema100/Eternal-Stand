@@ -8,11 +8,33 @@ class Player {
         this.maxHp = 100;
         this.velY = 0;
         this.onGround = true;
+
+        this.gifCanvas = document.createElement("canvas");
+        this.gifCanvas.width = 100; // GIF 크기에 맞게 지정 (테스트용)
+        this.gifCanvas.height = 100;
+        this.gifCtx = this.gifCanvas.getContext("2d");
+        this.gifReady = false;
+
+        gifler("src/public/images/running.gif").get(anim => {
+            anim.animateInCanvas(this.gifCanvas);
+            this.gifReady = true;
+        });
     }
 
     draw(ctx) {
-        ctx.fillStyle = "cyan";
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        if (this.gifReady) {
+            ctx.drawImage(
+                this.gifCanvas,
+                this.x - this.width / 2,
+                this.y - this.height / 2,
+                this.width * 2,
+                this.height * 2
+            );
+        } else {
+            // 로딩 중 대체 표시
+            ctx.fillStyle = "cyan";
+            ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        }
     }
 
     update() {
