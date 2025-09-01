@@ -50,6 +50,8 @@ function main() {
 }
 
 function handleKeyDown(e) {
+    if (e.repeat) return;
+    
     if (e.code === "Escape") {
         if (gameState === 'playing') {
             gameState = 'paused';
@@ -102,11 +104,6 @@ function handleCanvasClick(event) {
             if (isMouseInRect(mouseX, mouseY, buttons.restart)) {
                 resetGame();
             } else if (isMouseInRect(mouseX, mouseY, buttons.mainMenu)) {
-                gameState = 'startMenu';
-            }
-            break;
-        case 'gameWin':
-            if (isMouseInRect(mouseX, mouseY, buttons.mainMenu)) {
                 gameState = 'startMenu';
             }
             break;
@@ -221,25 +218,6 @@ function drawGameOverScreen(ctx) {
     ctx.fillText(buttons.mainMenu.text, canvas.width / 2, buttons.mainMenu.y + 35);
 }
 
-function drawGameWinScreen(ctx) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "gold";
-    ctx.font = "bold 60px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("YOU WIN!", canvas.width / 2, canvas.height / 2 - 80);
-    ctx.fillStyle = "white";
-    ctx.font = "24px Arial";
-    ctx.fillText(`Your Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
-    ctx.font = "20px Arial";
-    ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 10);
-    ctx.fillStyle = "#9E9E9E";
-    ctx.fillRect(buttons.mainMenu.x, buttons.mainMenu.y, buttons.mainMenu.width, buttons.mainMenu.height);
-    ctx.fillStyle = "white";
-    ctx.font = "bold 20px Arial";
-    ctx.fillText(buttons.mainMenu.text, canvas.width / 2, buttons.mainMenu.y + 42);
-}
-
 function drawUI(ctx) {
     const barWidth = 250;
     const barHeight = 25;
@@ -296,7 +274,7 @@ function log(msg) {
 
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (['playing', 'paused', 'gameOver', 'gameWin'].includes(gameState)) {
+    if (['playing', 'paused', 'gameOver'].includes(gameState)) {
         player.draw(ctx);
         if (gameMode === 'normal') {
             monster.draw(ctx);
@@ -339,9 +317,6 @@ function gameLoop() {
             break;
         case 'gameOver':
             drawGameOverScreen(ctx);
-            break;
-        case 'gameWin':
-            drawGameWinScreen(ctx);
             break;
     }
     requestAnimationFrame(gameLoop);

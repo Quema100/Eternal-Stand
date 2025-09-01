@@ -82,12 +82,6 @@ class Monster {
         score += 10;
         log(`점수 +10! 현재 점수: ${score}`);
 
-        if (score >= 10000) {
-            checkAndUpdateHighScore();
-            gameState = 'gameWin';
-            return;
-        }
-
         if (score > 0 && score % 250 === 0 && gameMode === 'normal') {
             triggerBossFight();
         } else {

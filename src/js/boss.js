@@ -2,7 +2,7 @@ class Boss {
     constructor(canvasWidth, canvasHeight) {
         this.width = 80;
         this.height = 80;
-        this.hp = 500;
+        this.hp = 1000;
         this.maxHp = 500;
         this.alive = false;
         this.x = 0;
@@ -68,11 +68,6 @@ class Boss {
             log("보스 처치!");
             score += 50;
             log(`보너스 점수 +50! 현재 점수: ${score}`);
-            if (score >= 10000) {
-                checkAndUpdateHighScore();
-                gameState = 'gameWin';
-                return;
-            }
             gameMode = 'normal';
             monster.spawn();
         }
