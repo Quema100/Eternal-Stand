@@ -22,6 +22,7 @@ class Player {
         this.gifs = {
             run: "src/public/images/running.gif",
             attack_D: "src/public/images/D_Attack.gif",
+            jump: "src/public/images/jump.gif",
             shoot: "src/public/images/shoot.gif",
             creative_shoot: "src/public/images/creative_shoot.gif"
         };
@@ -29,8 +30,8 @@ class Player {
         this.animations = {};
         this.scalewidth = 3;
         this.scaleheight = 2.6;
-        this.attackScalewidth = 3;
-        this.attackScaleheight = 3.3;
+        this.attackScalewidth = 2.7;
+        this.attackScaleheight = 3.2;
     }
 
     async preloadGifs() {
@@ -68,6 +69,14 @@ class Player {
         if (this.gifReady) {
             let wScale = this.isAttacking ? this.attackScalewidth : this.scalewidth;
             let hScale = this.isAttacking ? this.attackScaleheight : this.scaleheight;
+            if (this.isAttacking) {
+                wScale = this.attackScalewidth;
+                hScale = this.attackScaleheight;
+            } else if (!this.onGround) { // 점프 중일 때 스케일
+                wScale = this.attackScalewidth * 1.7; // 필요에 따라 조정
+                hScale = this.attackScalewidth * 2.1;
+            }
+
             ctx.drawImage(
                 this.gifCanvas,
                 this.x - (this.width * wScale) / 2,
@@ -98,6 +107,7 @@ class Player {
         if (this.onGround && !this.isAttacking) {
             this.velY = JUMP_STRENGTH;
             this.onGround = false;
+            this.loadGif("jump");
         }
     }
 
@@ -122,7 +132,7 @@ class Player {
         }, 500);
     }
 
-        shootProjectile(targetX, targetY) {
+    shootProjectile(targetX, targetY) {
         // 아래와 같이 this.animations 대신 this.gifs를 전달합니다.
         const projectile = new PlayerProjectile(this.x, this.y, targetX, targetY, this.gifs);
         playerProjectiles.push(projectile);

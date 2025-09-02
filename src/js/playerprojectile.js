@@ -1,12 +1,12 @@
 class PlayerProjectile {
     constructor(startX, startY, targetX, targetY, gifs) {
         this.x = startX;
-        this.y = startY;
+        this.y = startY - 60;
         this.width = 50;
         this.height = 50;
         this.speed = 12;
         this.alive = true;
-        this.dmg = 15 + Math.floor(Math.random() * 15);
+        this.dmg = 20 + Math.floor(Math.random() * 15);
 
         this.gifCanvas = document.createElement("canvas");
         this.gifCanvas.width = 100;
