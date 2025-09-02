@@ -10,28 +10,72 @@ class Player {
         this.onGround = true;
 
         this.gifCanvas = document.createElement("canvas");
-        this.gifCanvas.width = 100; // GIF 크기에 맞게 지정 (테스트용)
+        this.gifCanvas.width = 100;
         this.gifCanvas.height = 100;
         this.gifCtx = this.gifCanvas.getContext("2d");
         this.gifReady = false;
 
-        gifler("src/public/images/running.gif").get(anim => {
-            anim.animateInCanvas(this.gifCanvas);
-            this.gifReady = true;
+        this.isAttacking = false;
+        this.currentGif = null;
+        this.currentAnimation = null;
+
+        this.gifs = {
+            run: "src/public/images/running.gif",
+            attack_D: "src/public/images/D_Attack.gif",
+            shoot: "src/public/images/shoot.gif",
+            creative_shoot: "src/public/images/creative_shoot.gif"
+        };
+
+        this.animations = {};
+        this.scalewidth = 3;
+        this.scaleheight = 2.6;
+        this.attackScalewidth = 3;
+        this.attackScaleheight = 3.3;
+    }
+
+    async preloadGifs() {
+        const gifPromises = Object.entries(this.gifs).map(([type, url]) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    gifler(url).get(anim => {
+                        this.animations[type] = anim;
+                        resolve();
+                    });
+                } catch (e) {
+                    console.error(`Failed to preload '${type}' GIF (${url})`, e);
+                    reject(e);
+                }
+            });
         });
+        await Promise.all(gifPromises);
+    }
+
+    loadGif(type) {
+        if (this.currentAnimation) this.currentAnimation.stop();
+        const anim = this.animations[type];
+        if (!anim) {
+            console.error(`Animation '${type}' not preloaded!`);
+            return;
+        }
+        this.currentAnimation = anim;
+        this.currentGif = type;
+        this.gifCtx.clearRect(0, 0, this.gifCanvas.width, this.gifCanvas.height);
+        this.currentAnimation.animateInCanvas(this.gifCanvas);
+        this.gifReady = true;
     }
 
     draw(ctx) {
         if (this.gifReady) {
+            let wScale = this.isAttacking ? this.attackScalewidth : this.scalewidth;
+            let hScale = this.isAttacking ? this.attackScaleheight : this.scaleheight;
             ctx.drawImage(
                 this.gifCanvas,
-                this.x - this.width / 2,
-                this.y - this.height / 2,
-                this.width * 2,
-                this.height * 2
+                this.x - (this.width * wScale) / 2,
+                this.y - (this.height * hScale) / 2,
+                this.width * wScale,
+                this.height * hScale
             );
         } else {
-            // 로딩 중 대체 표시
             ctx.fillStyle = "cyan";
             ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
         }
@@ -45,12 +89,13 @@ class Player {
                 this.y = 250;
                 this.velY = 0;
                 this.onGround = true;
+                if (!this.isAttacking) this.loadGif("run");
             }
         }
     }
 
     jump() {
-        if (this.onGround) {
+        if (this.onGround && !this.isAttacking) {
             this.velY = JUMP_STRENGTH;
             this.onGround = false;
         }
@@ -67,21 +112,20 @@ class Player {
         }
     }
 
-    attack(targets) {
-        const attackRangeX = 550;
-        const attackRangeY = 200;
-        const inRange = targets.filter(target =>
-            target.alive &&
-            target.x > 0 && target.y > 0 &&
-            Math.abs(this.x - target.x) < attackRangeX &&
-            Math.abs(this.y - target.y) < attackRangeY
-        );
-        if (inRange.length === 0) return null;
-        const target = inRange[0];
-        const dmg = 10 + Math.floor(Math.random() * 20);
-        target.takeDamage(dmg);
-        log(`플레이어 공격! 대상 HP -${dmg}`);
-        return { target: target, dmg: dmg };
+    attack() {
+        if (this.isAttacking) return;
+        this.isAttacking = true;
+        this.loadGif("attack_D");
+        setTimeout(() => {
+            this.isAttacking = false;
+            if (this.onGround) this.loadGif("run");
+        }, 500);
+    }
+
+        shootProjectile(targetX, targetY) {
+        // 아래와 같이 this.animations 대신 this.gifs를 전달합니다.
+        const projectile = new PlayerProjectile(this.x, this.y, targetX, targetY, this.gifs);
+        playerProjectiles.push(projectile);
     }
 
     reset() {
@@ -90,5 +134,7 @@ class Player {
         this.y = 250;
         this.velY = 0;
         this.onGround = true;
+        this.isAttacking = false;
+        this.loadGif("run");
     }
 }
