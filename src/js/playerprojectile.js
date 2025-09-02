@@ -1,5 +1,3 @@
-// playerprojectile.js (전체 교체)
-
 class PlayerProjectile {
     constructor(startX, startY, targetX, targetY, gifs) {
         this.x = startX;
