@@ -1,4 +1,4 @@
-var canvas, ctx, player, monster, boss;
+var canvas, ctx, player, monster, boss, background;
 let gameState = 'startMenu';
 let gameMode = 'normal';
 let score = 0;
