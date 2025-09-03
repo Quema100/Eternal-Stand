@@ -1,7 +1,7 @@
 class Monster {
     constructor(canvasWidth, canvasHeight) {
         this.size = 25;
-        this.speed = 8;
+        this.speed = 6.5;
         this.minAttack = 5;
         this.maxAttack = 15;
         this.alive = false;
