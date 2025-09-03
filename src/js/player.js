@@ -9,15 +9,9 @@ class Player {
         this.velY = 0;
         this.onGround = true;
 
-        this.gifCanvas = document.createElement("canvas");
-        this.gifCanvas.width = 100;
-        this.gifCanvas.height = 100;
-        this.gifCtx = this.gifCanvas.getContext("2d");
         this.gifReady = false;
-
         this.isAttacking = false;
         this.currentGif = null;
-        this.currentAnimation = null;
 
         this.gifs = {
             run: "src/public/images/running.gif",
@@ -27,67 +21,75 @@ class Player {
             creative_shoot: "src/public/images/creative_shoot.gif"
         };
 
-        this.animations = {};
+        this.animations = {}; // { type: { anim, canvas } }
+
         this.scalewidth = 3;
         this.scaleheight = 2.6;
         this.attackScalewidth = 2.7;
         this.attackScaleheight = 3.2;
     }
 
+    // --- GIF preload ---
     async preloadGifs() {
-        const gifPromises = Object.entries(this.gifs).map(([type, url]) => {
+        const promises = Object.entries(this.gifs).map(([type, url]) => {
             return new Promise((resolve, reject) => {
                 try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 100;
+                    canvas.height = 100;
+
                     gifler(url).get(anim => {
-                        this.animations[type] = anim;
+                        anim.animateInCanvas(canvas); // offscreen canvas에 렌더
+                        this.animations[type] = { anim, canvas };
                         resolve();
                     });
                 } catch (e) {
-                    console.error(`Failed to preload '${type}' GIF (${url})`, e);
+                    console.error(`Failed to load ${type} GIF:`, e);
                     reject(e);
                 }
             });
         });
-        await Promise.all(gifPromises);
+        await Promise.all(promises);
+        this.gifReady = true;
+        this.loadGif("run"); // 초기 GIF
     }
 
+    // 현재 사용할 GIF 선택
     loadGif(type) {
-        if (this.currentAnimation) this.currentAnimation.stop();
-        const anim = this.animations[type];
-        if (!anim) {
+        if (!this.animations[type]) {
             console.error(`Animation '${type}' not preloaded!`);
             return;
         }
-        this.currentAnimation = anim;
         this.currentGif = type;
-        this.gifCtx.clearRect(0, 0, this.gifCanvas.width, this.gifCanvas.height);
-        this.currentAnimation.animateInCanvas(this.gifCanvas);
-        this.gifReady = true;
     }
 
+    // 플레이어 렌더
     draw(ctx) {
-        if (this.gifReady) {
-            let wScale = this.isAttacking ? this.attackScalewidth : this.scalewidth;
-            let hScale = this.isAttacking ? this.attackScaleheight : this.scaleheight;
-            if (this.isAttacking) {
-                wScale = this.attackScalewidth;
-                hScale = this.attackScaleheight;
-            } else if (!this.onGround) { // 점프 중일 때 스케일
-                wScale = this.attackScalewidth * 1.7; // 필요에 따라 조정
-                hScale = this.attackScalewidth * 2.1;
-            }
-
-            ctx.drawImage(
-                this.gifCanvas,
-                this.x - (this.width * wScale) / 2,
-                this.y - (this.height * hScale) / 2,
-                this.width * wScale,
-                this.height * hScale
-            );
-        } else {
+        if (!this.gifReady || !this.currentGif) {
             ctx.fillStyle = "cyan";
             ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            return;
         }
+
+        const animData = this.animations[this.currentGif];
+        let wScale = this.scalewidth;
+        let hScale = this.scaleheight;
+
+        if (this.isAttacking) {
+            wScale = this.attackScalewidth;
+            hScale = this.attackScaleheight;
+        } else if (!this.onGround) {
+            wScale = this.attackScalewidth * 1.7;
+            hScale = this.attackScaleheight * 1.7;
+        }
+
+        ctx.drawImage(
+            animData.canvas,
+            this.x - (this.width * wScale) / 2,
+            this.y - (this.height * hScale) / 2,
+            this.width * wScale,
+            this.height * hScale
+        );
     }
 
     update() {
@@ -133,8 +135,7 @@ class Player {
     }
 
     shootProjectile(targetX, targetY) {
-        // 아래와 같이 this.animations 대신 this.gifs를 전달합니다.
-        const projectile = new PlayerProjectile(this.x, this.y, targetX, targetY, this.gifs);
+        const projectile = new PlayerProjectile(this.x, this.y, targetX, targetY, this.animations);
         playerProjectiles.push(projectile);
     }
 
