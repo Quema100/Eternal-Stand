@@ -3,7 +3,7 @@ let gameState = 'startMenu';
 let gameMode = 'normal';
 let score = 0;
 let highScore = 0;
-const GRAVITY = 0.6;
+const GRAVITY = 0.5;
 const JUMP_STRENGTH = -13;
 let attackEffects = [];
 let bossProjectiles = [];
@@ -78,7 +78,7 @@ function handleKeyDown(e) {
     if (e.code === "KeyD") {
         if (!player.isAttacking) {
             player.attack(); // 1. 공격 애니메이션만 재생합니다.
-            player.shootProjectile(mousePos.x, mousePos.y); // 2. 마우스 위치로 투사체를 발사합니다.
+            setTimeout(() =>player.shootProjectile(mousePos.x, mousePos.y), 200); // 2. 마우스 위치로 투사체를 발사합니다.
         }
     }
     if (e.code === "Space") {
