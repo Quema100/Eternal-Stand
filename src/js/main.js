@@ -76,7 +76,7 @@ function handleKeyDown(e) {
 
     // 'D' 키를 누르면 공격 애니메이션과 함께 투사체를 발사합니다.
     if (e.code === "KeyD") {
-        if (!player.isAttacking) {
+        if (!player.isAttacking  && player.onGround) {
             player.attack(); // 1. 공격 애니메이션만 재생합니다.
             setTimeout(() =>player.shootProjectile(mousePos.x, mousePos.y), 200); // 2. 마우스 위치로 투사체를 발사합니다.
         }
