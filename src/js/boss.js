@@ -1,4 +1,4 @@
-class Boss {
+class BossMonster {
     constructor(canvasWidth, canvasHeight) {
         this.width = 80;
         this.height = 80;

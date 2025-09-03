@@ -1,5 +1,4 @@
 var canvas, ctx, player, monster, boss;
-let BOSS = false;
 let gameState = 'startMenu';
 let gameMode = 'normal';
 let score = 0;
@@ -42,12 +41,15 @@ async function main() {
     buttons.back.x = centerX - buttons.back.width / 2;
     buttons.back.y = canvas.height - 80;
 
+    background = new Background("src/public/images/bridgeBack.gif", "src/public/images/bridgeFront.gif");
+    background.setSize(canvas.width, 10);
+    await background.preloadGifs();
+
     player = new Player(100, 250);
     monster = new Monster(canvas.width, canvas.height);
-    boss = new Boss(canvas.width, canvas.height);
+    boss = new BossMonster(canvas.width, canvas.height);
 
     await player.preloadGifs();
-    player.loadGif('run');
 
     document.addEventListener("keydown", handleKeyDown);
     canvas.addEventListener('click', handleCanvasClick);
@@ -135,7 +137,7 @@ function checkCollision(proj, target) {
     const targetWidth = target.size || target.width;
     const targetHeight = target.size || target.height;
     return Math.abs(proj.x - target.x) < (proj.width + targetWidth) / 2 &&
-           Math.abs(proj.y - target.y) < (proj.height + targetHeight) / 2;
+        Math.abs(proj.y - target.y) < (proj.height + targetHeight) / 2;
 }
 
 
@@ -282,13 +284,22 @@ function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (['playing', 'paused', 'gameOver'].includes(gameState)) {
+        // 1) 뒤 배경(far) 그리기 (background.updateAndDraw은 far를 렌더해서 즉시 메인 ctx에 그립니다)
+        if (background) background.updateAndDraw(ctx);
+
+        // 2) 플레이어 / 몬스터 / 보스 그리기 (배경 위)
         player.draw(ctx);
         monster.draw(ctx);
         if (boss.alive) boss.draw(ctx);
-        
+
+        // 3) 앞 배경(near) 그리기 — 플레이어보다 앞에 보이게 함
+        if (background) background.drawNear(ctx);
+
+        // 4) 투사체들(앞 배경 위에 보이게 하려면 drawNear 호출 이전으로 이동하세요)
         playerProjectiles.forEach(p => p.draw(ctx));
         bossProjectiles.forEach(p => p.draw(ctx));
-        
+
+        // 5) 공격 이펙트 & UI
         drawAttackEffects();
         drawUI(ctx);
     }
@@ -332,7 +343,7 @@ function gameLoop() {
                 }
             });
             bossProjectiles = bossProjectiles.filter(p => p.alive);
-            
+
             break;
         case 'paused':
             drawPausedScreen(ctx);
