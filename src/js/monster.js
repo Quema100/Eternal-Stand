@@ -137,7 +137,7 @@ class Monster {
             score += 10;
             log(`점수 +10! 현재 점수: ${score}`);
 
-            if (score > 0 && score % 10 === 0 && gameMode === 'normal') {
+            if (score > 0 && score % 150 === 0 && gameMode === 'normal') {
                 triggerBossFight();
             } else {
                 this.spawn();
