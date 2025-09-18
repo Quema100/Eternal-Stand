@@ -1,6 +1,6 @@
 class Monster {
     constructor(canvasWidth, canvasHeight) {
-        this.size = 25;
+        this.size = 50;
         this.speed = 6.5;
         this.minAttack = 5;
         this.maxAttack = 15;
@@ -14,6 +14,39 @@ class Monster {
         this.moveDirY = 0;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+
+        this.gifReady = false;
+        this.currentGif = null;
+
+        this.gifs = {
+            bug: "src/public/images/monster_bug.gif",
+            eye: "src/public/images/monster_eye.gif",
+        };
+
+        this.animations = {};
+    }
+
+    async preloadGifs() {
+        const promises = Object.entries(this.gifs).map(([type, url]) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 100;
+                    canvas.height = 100;
+
+                    gifler(url).get(anim => {
+                        anim.animateInCanvas(canvas); // offscreen canvas에 렌더
+                        this.animations[type] = { anim, canvas };
+                        resolve();
+                    });
+                } catch (e) {
+                    console.error(`Failed to load ${type} GIF:`, e);
+                    reject(e);
+                }
+            });
+        });
+        await Promise.all(promises);
+        this.gifReady = true;
     }
 
     spawn() {
@@ -27,6 +60,11 @@ class Monster {
             this.y = 50 + Math.random() * (this.canvasHeight - 100);
             this.spawnTimestamp = Date.now();
             log(`몬스터 등장! HP: ${this.hp}`);
+
+            // 랜덤으로 bug 또는 eye 선택
+            const keys = Object.keys(this.animations);
+            this.currentGif = keys[Math.floor(Math.random() * keys.length)];
+
             const dx = player.x - this.x;
             const dy = player.y - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -67,26 +105,43 @@ class Monster {
 
     draw(ctx) {
         if (!this.alive) return;
-        ctx.fillStyle = "red";
-        ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+        if (this.currentGif && this.animations[this.currentGif]) {
+            const { canvas } = this.animations[this.currentGif];
+            ctx.drawImage(
+                canvas,
+                this.x - this.size / 2,
+                this.y - this.size / 2,
+                this.size,
+                this.size
+            );
+        } else {
+            // GIF가 아직 없으면 기본 빨간 박스
+            ctx.fillStyle = "red";
+            ctx.fillRect(
+                this.x - this.size / 2,
+                this.y - this.size / 2,
+                this.size,
+                this.size
+            );
+        }
     }
 
     takeDamage(dmg) {
-    if (!this.alive) return;
-    this.hp -= dmg;
-    log(`몬스터 -${dmg} → ${this.hp}`);
-    if (this.hp <= 0) {
-        this.alive = false;
-        log("몬스터 처치!");
-        
-        score += 10;
-        log(`점수 +10! 현재 점수: ${score}`);
+        if (!this.alive) return;
+        this.hp -= dmg;
+        log(`몬스터 -${dmg} → ${this.hp}`);
+        if (this.hp <= 0) {
+            this.alive = false;
+            log("몬스터 처치!");
 
-        if (score > 0 && score % 250 === 0 && gameMode === 'normal') {
-            triggerBossFight();
-        } else {
-            this.spawn();
+            score += 10;
+            log(`점수 +10! 현재 점수: ${score}`);
+
+            if (score > 0 && score % 10 === 0 && gameMode === 'normal') {
+                triggerBossFight();
+            } else {
+                this.spawn();
+            }
         }
     }
-}
 }

@@ -50,6 +50,7 @@ async function main() {
     boss = new BossMonster(canvas.width, canvas.height);
 
     await player.preloadGifs();
+    await monster.preloadGifs();
 
     document.addEventListener("keydown", handleKeyDown);
     canvas.addEventListener('click', handleCanvasClick);
