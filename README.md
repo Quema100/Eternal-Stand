@@ -49,5 +49,5 @@ git clone https://github.com/Quema100/Eternal-Stand.git
 --- 
 
 > [!IMPORTANT] 
-> This is my first game, and the optimization is not perfect.  
+> This is the first game I’ve developed, and the optimization isn’t perfect.    
 > Performance may vary depending on your computer's specifications.  
